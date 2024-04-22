@@ -1,0 +1,62 @@
+!-- dashboard_user2.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - User 2</title>
+</head>
+<body>
+    <h1>Welcome User 2</h1>
+    <p>Role: taskaceptar</p>
+
+    <h2>Tasks</h2>
+    {% for task in user2.tasks %}
+        {% if task.status == 'initiated' %}
+            <button class="task-button" id="{{ task.name }}"> {{ task.name }} </button>
+        {% elif task.status == 'pending' %}
+            <button class="task-button" id="{{ task.name }}" style="background-color: blue;" onclick="initiateTask('{{ task.name }}')"> {{ task.name }} </button>
+        {% elif task.status == 'accepted' %}
+            <button class="task-button" id="{{ task.name }}" style="background-color: green;"> {{ task.name }} - {{ task.taskgiver }} - {{ task.eta }} </button>
+            <script>
+                startTimer('{{ task.name }}', '{{ task.eta }}');
+            </script>
+        {% endif %}
+    {% endfor %}
+
+    <button class="task-button" id="Bring Coffee" style="background-color: blue;" onclick="initiateTask('Bring Coffee')"> Bring Coffee </button>
+
+    <script>
+        function initiateTask(taskName) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/initiate_task');
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200 && xhr.responseText) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        document.getElementById(taskName).style.backgroundColor = 'red';
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            };
+            xhr.send(encodeURI('task_name=' + taskName));
+        }
+
+        function startTimer(taskName, eta) {
+            var countDownDate = new Date(new Date().getTime() + (parseInt(eta) * 60 * 1000)).getTime();
+            var x = setInterval(function() {
+                var now = new Date().getTime();
+                var distance = countDownDate - now;
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                document.getElementById(taskName).innerHTML = taskName + ' - ' + minutes + 'm ' + seconds + 's';
+                if (distance < 0) {
+                    clearInterval(x);
+                    document.getElementById(taskName).innerHTML = taskName + ' - Expired';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
